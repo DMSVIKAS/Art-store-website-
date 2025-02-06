@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout</title>
+    
+    <link rel="stylesheet" href="styles2.css"> <!-- Link to the separate CSS file -->
+</head>
+<body>
+    <header>
+        <h1>Checkout</h1>
+        <nav>
+            <ul>
+                <li><a href="index.html">Back to Gallery</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section id="checkout-section">
+        <h2>Your Cart</h2>
+        <div id="cart-details"></div>
+        <p id="total-price"></p>
+        <button onclick="showPersonalDetailsForm()">Place Order</button>
+    </section>
+
+    <!-- Personal Details Form (Initially Hidden) -->
+    <section id="personal-details-section" style="display:none;">
+        <h3>Enter Your Personal Details</h3>
+        <form id="personal-details-form">
+            <label for="name">Name:</label>
+            <input type="text" id="name" required><br><br>
+
+            <label for="phone">Phone Number:</label>
+            <input type="tel" id="phone" pattern="[0-9]{10}" placeholder="Enter 10 digit phone number" required><br><br>
+
+            <label for="address">Address:</label>
+            <textarea id="address" required placeholder="Enter your full address"></textarea><br><br>
+
+            <label for="pincode">Pincode:</label>
+            <input type="number" id="pincode" maxlength="6" pattern="\d{6}" placeholder="Enter 6-digit Pincode" required><br><br>
+
+            <label for="state">State:</label>
+            <select id="state" required>
+                <option value="">Select State</option>
+                <option value="Andhra Pradesh">Andhra Pradesh</option>
+                <option value="Bihar">Bihar</option>
+                <option value="Goa">Goa</option>
+                <option value="Karnataka">Karnataka</option>
+                <!-- Add more states here -->
+            </select><br><br>
+
+            <label for="country">Country:</label>
+            <select id="country" required>
+                <option value="">Select Country</option>
+                <option value="India">India</option>
+                <option value="USA">USA</option>
+                <option value="UK">UK</option>
+                <!-- Add more countries here -->
+            </select><br><br>
+
+            <button type="button" onclick="submitOrder()">Submit Order</button>
+        </form>
+    </section>
+
+    <!-- Order Confirmation Section (Initially Hidden) -->
+    <section id="order-confirmation-section" style="display:none;">
+        <h3>Order Placed!</h3>
+        <p id="confirmation-message"></p>
+        <button onclick="backToHomePage()">Back to Home</button>
+    </section>
+
+    <script>
+        // Get cart data from localStorage
+        let cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+        function displayCart() {
+            let cartDetails = document.getElementById("cart-details");
+            let totalPrice = document.getElementById("total-price");
+            let total = 0;
+
+            if (cart.length === 0) {
+                cartDetails.innerHTML = "<p>Your cart is empty.</p>";
+                totalPrice.innerText = "";
+                return;
+            }
+
+            cartDetails.innerHTML = "";
+            cart.forEach((item, index) => {
+                total += item.price;
+                cartDetails.innerHTML += `<p>${item.item} - $${item.price} <button onclick="removeItem(${index})">Remove</button></p>`;
+            });
+
+            // Apply discount if 2 or more items are in the cart
+            if (cart.length >= 2) {
+                total *= 0.9; // Apply 10% discount
+            }
+
+            totalPrice.innerText = "Total Price: $" + total.toFixed(2);
+        }
+
+        function removeItem(index) {
+            cart.splice(index, 1);
+            localStorage.setItem("cart", JSON.stringify(cart));
+            displayCart();
+        }
+
+        // Show the personal details form when Place Order is clicked
+        function showPersonalDetailsForm() {
+            if (cart.length === 0) {
+                alert("Your cart is empty. Please add items to your cart before placing an order.");
+                return;
+            }
+            document.getElementById("checkout-section").style.display = "none";
+            document.getElementById("personal-details-section").style.display = "block";
+        }
+
+        // Generate a random delivery date between 3 and 7 days from today
+        function generateRandomDeliveryDate() {
+            const today = new Date();
+            const randomDays = Math.floor(Math.random() * 5) + 3; // Delivery date between 3 and 7 days from today
+            today.setDate(today.getDate() + randomDays);
+            return today.toDateString(); // Format it into a readable string
+        }
+
+        // Submit the order and show confirmation message
+        function submitOrder() {
+            // Get the user's personal details from the form
+            const name = document.getElementById("name").value;
+            const phone = document.getElementById("phone").value;
+            const address = document.getElementById("address").value;
+            const pincode = document.getElementById("pincode").value;
+            const state = document.getElementById("state").value;
+            const country = document.getElementById("country").value;
+
+            if (name && phone && address && pincode && state && country) {
+                // Hide personal details form and show confirmation section
+                document.getElementById("personal-details-section").style.display = "none";
+                document.getElementById("order-confirmation-section").style.display = "block";
+
+                // Generate the random delivery date
+                const deliveryDate = generateRandomDeliveryDate();
+
+                // Display order confirmation message
+                const confirmationMessage = `
+                    Thank you, ${name}! Your order has been placed.<br><br>
+                    Order Details:<br>
+                    ${cart.map(item => `${item.item} - $${item.price}`).join("<br>")}<br><br>
+                    Total Price: $${getTotalPrice().toFixed(2)}<br><br>
+                    Delivery Address: ${address}, ${pincode}, ${state}, ${country}<br><br>
+                    Your order will be delivered to the provided address by ${deliveryDate}.
+                `;
+                document.getElementById("confirmation-message").innerHTML = confirmationMessage;
+
+                // Clear the cart from localStorage
+                localStorage.removeItem("cart");
+            } else {
+                alert("Please fill in all details!");
+            }
+        }
+
+        // Calculate total price after discount
+        function getTotalPrice() {
+            let total = 0;
+            cart.forEach(item => total += item.price);
+
+            if (cart.length >= 2) {
+                total *= 0.9; // Apply 10% discount
+            }
+
+            return total;
+        }
+
+        // Back to the home page after order is confirmed
+        function backToHomePage() {
+            window.location.href = "index.html"; // Go back to the home page
+        }
+
+        // Display cart details on page load
+        displayCart();
+    </script>
+</body>
+</html>
